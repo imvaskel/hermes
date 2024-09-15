@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block title %}Hermes{% endblock %} {% block head %}
+<style>
+  body {
+    min-width: 100%;  }
+
+  .body-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+  }
+
+  .sidebar {
+    background-color: #40363a;
+  }
+
+  .sidebar.short {
+    width: 2.5%;
+  }
+
+  .content {
+    padding: 16px;
+    flex-grow: 1;
+    flex-direction: column;
+  }
+
+  .notes {
+    display: flex;
+    flex-direction: column-reverse;
+    flex-grow: 1;
+    gap: 16px;
+    overflow-y: scroll;
+    min-height: calc(100vh - 132px);
+  }
+
+  .note {
+    line-height: 0.25;
+  }
+
+  .timestamp {
+    color: rgba(216, 215, 219, 30%);
+  }
+
+  .message-box {
+    height: 100px;
+    bottom: 0%;
+    position: absolute;
+    width: calc(100% - 48px);
+    margin-right: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .message-box > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .note-input {
+    flex-grow: 1;
+  }
+
+  .submit-button {
+    border-radius: 50%;
+    display: flex;
+    height: 24px;
+    width: 24px;
+    border: 0;
+  }
+
+  .submit-button svg {
+    height: 16px;
+  }
+
+  .note {
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="body-container">
+  <div class="sidebar"></div>
+  <div class="content">
+    <div hx-get="notes?page=0&per_page=5" hx-trigger="load" class="notes"></div>
+    <div class="message-box">
+      <div>
+        <input type="text" name="note-input" class="note-input" />
+        <button class="submit-button" hx-post="/create-note" hx-ext="json-enc" hx-include="[name='note-input']">
+          <svg
+            class="w-6 h-6 text-gray-800 dark:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 7.757v8.486M7.757 12h8.486M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

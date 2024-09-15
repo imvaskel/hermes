@@ -1,0 +1,19 @@
+[package]
+name = "hermes"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+askama = "0.12.1"
+askama_axum = "0.4.0"
+axum = "0.7.5"
+axum-htmx = "0.6.0"
+color-eyre = "0.6.3"
+eos = { git = "https://github.com/Rapptz/eos", version = "0.1.0", features = ["macros"] }
+ron = "0.8.1"
+serde = { version = "1.0.210", features = ["derive"] }
+sqlx = { version = "0.8.2", features = ["macros", "runtime-tokio", "sqlite", "derive"] }
+tokio = { version = "1.40.0", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+uuid = { version = "1.10.0", features = ["v4"] }

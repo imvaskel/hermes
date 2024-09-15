@@ -1,0 +1,5 @@
+/target
+.sqlx/
+.env
+config.ron
+*.db

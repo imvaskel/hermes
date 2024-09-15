@@ -1,0 +1,5 @@
+Config(
+    port: 3000,
+    bind_addr: "127.0.0.1",
+    db_url: "sqlite:hermes.db"
+)
