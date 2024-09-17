@@ -5,7 +5,7 @@
   if
   loop.first
   %}
-  hx-get="/notes?page={{ page + 1 }}&per_page={{ per_page }}"
+  hx-get="/notes/{{note_id}}/entries?page={{ page + 1 }}&per_page={{ per_page }}"
   hx-trigger="intersect once"
   hx-swap="afterend"
   {%

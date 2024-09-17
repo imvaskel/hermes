@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+
+{% block head %}
+<style>
+    .error {
+        color: #DA4453
+    }
+
+    body {
+        min-height: 100vh;
+        min-width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .form {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    label {
+        width: 256px;
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+    }
+
+    button {
+        margin-top: 16px;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<form method="post" class="form">
+    <label>
+        Username
+        <input type="text" name="username" id="username"> </input>
+    </label>
+    <label>
+        Password
+        <input type="password" name="password" id="password"> </input>
+    </label>
+    <label>
+        Access Key
+        <input type="text" name="access_key" id="access_key"> </input></label>
+    <button type="submit">Register</button>
+    <a href="/login"><button type="button">Log In</button></a>
+    {% match message %}
+        {% when Some with (msg) %}
+            <p class="error">{{ msg }}</p>
+        {% when None %}
+    {% endmatch %}
+</form>
+
+{% endblock %}
