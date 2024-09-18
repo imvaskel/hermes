@@ -1,6 +1,6 @@
 use askama::Template;
 use axum::{
-    routing::{get, post},
+    routing::get,
     Router,
 };
 use serde::Deserialize;
@@ -79,7 +79,7 @@ mod post {
     }
 
     pub async fn register(
-        mut auth_session: AuthSession,
+        auth_session: AuthSession,
         State(state): State<App>,
         Form(form): Form<RegisterForm>,
     ) -> impl IntoResponse {
@@ -93,7 +93,7 @@ mod post {
         let pw = password_auth::generate_hash(&form.password);
         let id = Uuid::new_v4();
         match sqlx::query("INSERT INTO users VALUES($1, $2, $3)")
-            .bind(&id.to_string())
+            .bind(id.to_string())
             .bind(&form.username)
             .bind(&pw)
             .execute(&state.db)
@@ -109,7 +109,7 @@ mod post {
                     .await
                     .into_response()
             }
-            Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
     }
 }

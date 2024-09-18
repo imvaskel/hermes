@@ -12,7 +12,7 @@ use super::App;
 #[derive(Template)]
 #[template(path = "notes.html")]
 struct EntriesTemplate {
-    pub groups: Vec<Vec<Entry>>,
+    pub notes: Vec<Entry>,
     pub page: u32,
     pub per_page: u32,
     pub note_id: String,
@@ -51,7 +51,7 @@ mod post {
         Form,
     };
     use eos::DateTime;
-    use sqlx::{Database, Sqlite};
+
     use tracing::debug;
     use uuid::Uuid;
 
@@ -118,7 +118,7 @@ mod post {
                 };
                 EntriesTemplate {
                     note_id: entry.id.clone(),
-                    groups: vec![vec![entry]],
+                    notes: vec![entry],
                     page: 0,
                     per_page: 5,
                 }
@@ -167,7 +167,7 @@ mod get {
                 match sqlx::query_as(
                     "INSERT INTO notes VALUES (?, ?, ?) RETURNING *",
                 )
-                .bind(&id.to_string())
+                .bind(id.to_string())
                 .bind("default")
                 .bind(&user.id)
                 .fetch_one(&state.db)
@@ -215,9 +215,9 @@ mod get {
         .unwrap();
         notes.reverse();
 
-        if notes.len() == 0 {
+        if notes.is_empty() {
             return EntriesTemplate {
-                groups: vec![],
+                notes: vec![],
                 page: pagination.page,
                 per_page: pagination.per_page,
                 note_id: "".into(),
@@ -225,27 +225,11 @@ mod get {
             .into_response();
         }
 
-        let mut groups: Vec<Vec<Entry>> = Vec::new();
-        let mut current: Vec<Entry> = vec![notes[0].clone()];
-        let mut current_max: DateTime = current[0].created_at.to_datetime() + 15.minutes();
-
-        for i in 1..(notes.len()) {
-            if notes[i].created_at.to_datetime() < current_max {
-                current.push(notes[i].clone());
-            } else {
-                groups.push(current);
-                current = vec![notes[i].clone()];
-                current_max = current[0].created_at.to_datetime() + 15.minutes();
-            }
-        }
-        groups.push(current);
-        groups.reverse();
-
         EntriesTemplate {
-            groups,
+            note_id: notes[0].parent.id.clone(),
+            notes: notes,
             page: pagination.page,
             per_page: pagination.per_page,
-            note_id: notes[0].parent.id.clone(),
         }
         .into_response()
     }

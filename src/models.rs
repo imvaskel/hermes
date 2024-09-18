@@ -1,7 +1,7 @@
-use std::ops::{Add, Deref};
+use std::ops::Deref;
 
 use axum_login::AuthUser;
-use eos::{fmt::format_spec, DateTime, Interval, Timestamp, Utc};
+use eos::{fmt::format_spec, DateTime, Timestamp, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -51,6 +51,7 @@ impl AuthUser for User {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, FromRow)]
 pub struct Note {
     #[sqlx(rename = "note_id")]

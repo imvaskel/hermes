@@ -1,7 +1,8 @@
 {% extends "base.html" %} {% block title %}Hermes{% endblock %} {% block head %}
 <style>
   body {
-    min-width: 100%;  }
+    min-width: 100%;
+  }
 
   .body-container {
     display: flex;
@@ -39,6 +40,10 @@
 
   .timestamp {
     color: rgba(216, 215, 219, 30%);
+  }
+
+  .note[data-grouped="true"] .timestamp {
+    display: none;
   }
 
   .message-box {
@@ -80,15 +85,113 @@
     flex-direction: column;
   }
 </style>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const LIMIT = 1000 * 60 * 15;
+
+    const notes = document.getElementById("notes");
+    const submit = document.getElementById("submit-button");
+    if (notes !== null && submit !== null) {
+      submit.addEventListener("click", () => {
+        notes.scrollTo(0, notes.scrollBy);
+        return true;
+      });
+    }
+
+    /**
+     * @type {Array<Node>}
+     **/
+    let newNodes = new Array();
+
+    /**
+     * @param {HTMLDivElement} elem
+     **/
+    window.handleProcessNode = (el, ev) => {
+      let elem = ev.target;
+
+      newNodes.push(elem);
+
+      let createdAt = parseInt(elem.getAttribute("data-created"));
+      let now = new Date();
+      let todayStart = new Date();
+      todayStart.setHours(0);
+      todayStart.setMinutes(0);
+      todayStart.setSeconds(0, 0);
+
+      let date = new Date(createdAt);
+      let timestamp = elem.querySelector(".timestamp");
+
+      let yesterday = new Date(todayStart - 86400000);
+
+      let ts = "";
+      if (todayStart < createdAt) {
+        ts = `Today at ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`;
+      } else if (yesterday < createdAt) {
+        ts = `Yesterday at ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`;
+      } else {
+        d = date.toLocaleString().split(",")[0];
+        ts = `${d} ${date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`;
+      }
+
+      timestamp.textContent = ts;
+    };
+
+    /**
+     * @param {HTMLDivElement} elem
+     **/
+    window.handleAfterSwap = (elem, ev) => {
+      newNodes.length = 0;
+
+      setTimeout(() => {
+        let last = newNodes[newNodes.length - 1].nextElementSibling;
+        for (let elem of newNodes.reverse()) {
+          let lastCreated = parseInt(last.getAttribute("data-created"));
+          let created = parseInt(elem.getAttribute("data-created"));
+
+          if (
+            lastCreated + LIMIT > created &&
+            last.getAttribute("data-id") !== elem.getAttribute("data-id")
+          ) {
+            elem.setAttribute("data-grouped", true);
+          } else {
+            last = elem;
+          }
+        }
+      }, 100);
+    };
+  });
+</script>
 {% endblock %} {% block content %}
 <div class="body-container">
-  <div class="sidebar"></div>
   <div class="content">
-    <div hx-get="/notes/{{id}}/entries?page=0&per_page=5" hx-trigger="load" id="notes" class="notes"></div>
+    <div
+      hx-get="/notes/{{id}}/entries?page=0&per_page=5"
+      hx-trigger="load"
+      hx-on::after-process-node="handleProcessNode(this, event)"
+      hx-on::after-swap="handleAfterSwap(this, event)"
+      id="notes"
+      class="notes"
+    ></div>
     <div class="message-box">
       <div>
         <input type="text" name="note-input" class="note-input" />
-        <button class="submit-button" hx-target="#notes" hx-swap="afterend" hx-post="/notes/{{id}}/entries/create" hx-include="[name='note-input']">
+        <button
+          id="submit-button"
+          class="submit-button"
+          hx-target="#notes"
+          hx-swap="afterbegin"
+          hx-post="/notes/{{id}}/entries/create"
+          hx-include="[name='note-input']"
+        >
           <svg
             class="w-6 h-6 text-gray-800 dark:text-white"
             aria-hidden="true"

@@ -1,9 +1,9 @@
-{% for group in groups %}
+{% for note in notes.iter().rev() %}
 <div
-  class="note-group"
+  data-id="{{note.id}}"
   {%
   if
-  loop.first
+  loop.last
   %}
   hx-get="/notes/{{note_id}}/entries?page={{ page + 1 }}&per_page={{ per_page }}"
   hx-trigger="intersect once"
@@ -11,14 +11,11 @@
   {%
   endif
   %}
+  class="note"
+  data-grouped="false"
+  data-created="{{ note.created_at.0.as_milliseconds() }}"
 >
-  {% for note in group %}
-  <div data-id="{{note.id}}" class="note">
-    {% if loop.first %}
-    <p class="timestamp">{{note.format()}}</p>
-    {% endif %}
-    <p>{{note.content}}</p>
-  </div>
-  {% endfor %}
+  <p class="timestamp"></p>
+  <p>{{note.content}}</p>
 </div>
 {% endfor %}
