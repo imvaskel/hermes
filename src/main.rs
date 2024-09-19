@@ -4,6 +4,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 use crate::web::App;
 
 mod config;
+mod filters;
 mod models;
 mod user;
 mod web;

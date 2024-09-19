@@ -158,7 +158,7 @@
 
         let last = newNodes[newNodes.length - 1].nextElementSibling;
         for (let elem of newNodes.reverse()) {
-          let lastCreated = parseInt(last.getAttribute("data-created"));
+          let lastCreated = last !== null ? parseInt(last.getAttribute("data-created")) : 0;
           let created = parseInt(elem.getAttribute("data-created"));
 
           if (
@@ -188,7 +188,7 @@
     ></div>
     <div class="message-box">
       <div>
-        <input type="text" name="note-input" class="note-input" />
+        <textarea id="note-input" name="note-input" class="note-input"></textarea>
         <button
           id="submit-button"
           class="submit-button"
@@ -196,7 +196,7 @@
           hx-swap="afterbegin"
           hx-post="/notes/{{id}}/entries/create"
           hx-include="[name='note-input']"
-          hx-on::after-swap="$('.note-input').value = ''"
+          hx-on::after-request="document.getElementById('note-input').value = ''"
         >
           <svg
             class="w-6 h-6 text-gray-800 dark:text-white"

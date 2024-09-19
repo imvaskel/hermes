@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::models::{Entry, Note};
+use crate::{filters, models::{Entry, Note}};
 
 use super::App;
 
@@ -45,6 +45,7 @@ struct NoteTemplate {
 struct IndexTemplate {
     notes: Vec<Note>,
 }
+
 
 pub fn router() -> Router<App> {
     Router::new()
@@ -218,9 +219,9 @@ mod get {
         extract::{Path, Query, State},
         http::StatusCode,
     };
-    
-    
-    
+
+
+
 
     use crate::{models::Note, user::AuthSession, web::App};
 

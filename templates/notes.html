@@ -16,6 +16,6 @@
   data-created="{{ note.created_at.0.as_milliseconds() }}"
 >
   <p class="timestamp"></p>
-  <p>{{note.content}}</p>
+  <p>{{ note.content|to_markdown|safe }}</p>
 </div>
 {% endfor %}
