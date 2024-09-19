@@ -12,7 +12,7 @@ axum = "0.7.5"
 axum-htmx = "0.6.0"
 axum-login = "0.16.0"
 color-eyre = "0.6.3"
-comrak = "0.28.0"
+comrak = { version = "0.28.0", features = ["syntect"] }
 eos = { git = "https://github.com/Rapptz/eos", version = "0.1.0", features = ["macros"] }
 password-auth = "1.0.0"
 ron = "0.8.1"

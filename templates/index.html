@@ -60,7 +60,6 @@
   .delete-button svg {
     height: 2rem;
   }
-
 </style>
 
 {% endblock %} {% block content %} {% include "nav.html" %} {% if notes.len() ==
@@ -77,7 +76,11 @@
   {% for note in notes %}
   <div class="note_info">
     <a href="/notes/{{note.id}}">{{note.name}}</a>
-    <button hx-delete="/notes/{{note.id}}" class="delete-button">
+    <button
+      hx-delete="/notes/{{note.id}}"
+      class="delete-button"
+      hx-confirm="Are you sure you would like to delete this note?"
+    >
       <svg
         class="w-6 h-6 text-gray-800 dark:text-white"
         aria-hidden="true"

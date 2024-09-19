@@ -1,5 +1,5 @@
 mod app;
-mod notes;
 mod auth;
+mod notes;
 
 pub use app::App;

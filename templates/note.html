@@ -2,6 +2,7 @@
 <style>
   body {
     min-width: 100%;
+    max-width: 100vw;
   }
 
   .body-container {
@@ -28,14 +29,13 @@
     display: flex;
     flex-direction: column-reverse;
     flex-grow: 1;
-    gap: 16px;
     overflow-y: scroll;
     min-height: calc(100vh - 132px);
     max-height: calc(100vh - 132px);
   }
 
-  .note {
-    line-height: 0.25;
+  .notes .note[data-grouped="false"]:not(:last-child) {
+    margin-top: 16px;
   }
 
   .timestamp {
@@ -83,6 +83,15 @@
   .note {
     display: flex;
     flex-direction: column;
+    height: fit-content;
+  }
+
+  .note p {
+    height: fit-content;
+    display: inline-block;
+    word-break: break-word;
+    line-height: 1;
+    margin-bottom: 4px;
   }
 </style>
 <script>
@@ -158,7 +167,8 @@
 
         let last = newNodes[newNodes.length - 1].nextElementSibling;
         for (let elem of newNodes.reverse()) {
-          let lastCreated = last !== null ? parseInt(last.getAttribute("data-created")) : 0;
+          let lastCreated =
+            last !== null ? parseInt(last.getAttribute("data-created")) : 0;
           let created = parseInt(elem.getAttribute("data-created"));
 
           if (
@@ -174,8 +184,7 @@
     };
   });
 </script>
-{% endblock %} {% block content %}
-{% include "nav.html" %}
+{% endblock %} {% block content %} {% include "nav.html" %}
 <div class="body-container">
   <div class="content">
     <div
@@ -188,10 +197,15 @@
     ></div>
     <div class="message-box">
       <div>
-        <textarea id="note-input" name="note-input" class="note-input"></textarea>
+        <textarea
+          id="note-input"
+          name="note-input"
+          class="note-input"
+        ></textarea>
         <button
           id="submit-button"
           class="submit-button"
+          hx-trigger="click, keydown[shiftKey&&key=='Enter'] from:textarea"
           hx-target="#notes"
           hx-swap="afterbegin"
           hx-post="/notes/{{id}}/entries/create"

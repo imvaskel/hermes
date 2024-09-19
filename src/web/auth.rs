@@ -1,8 +1,5 @@
 use askama::Template;
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 use serde::Deserialize;
 
 use super::App;
@@ -11,7 +8,7 @@ use super::App;
 #[template(path = "login.html")]
 pub struct LoginTemplate {
     message: Option<String>,
-    next: Option<String>
+    next: Option<String>,
 }
 
 #[derive(Template)]
@@ -62,7 +59,7 @@ mod post {
             Ok(None) => {
                 return LoginTemplate {
                     message: Some("Invalid username/password.".into()),
-                    next: creds.next
+                    next: creds.next,
                 }
                 .into_response()
             }
@@ -127,7 +124,11 @@ mod get {
     use super::*;
 
     pub async fn login() -> impl IntoResponse {
-        LoginTemplate { message: None, next: None }.into_response()
+        LoginTemplate {
+            message: None,
+            next: None,
+        }
+        .into_response()
     }
 
     pub async fn register() -> impl IntoResponse {
