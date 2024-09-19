@@ -2,4 +2,4 @@
 .sqlx/
 .env
 config.ron
-*.db
+*.db*

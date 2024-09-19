@@ -11,6 +11,7 @@ use super::App;
 #[template(path = "login.html")]
 pub struct LoginTemplate {
     message: Option<String>,
+    next: Option<String>
 }
 
 #[derive(Template)]
@@ -61,6 +62,7 @@ mod post {
             Ok(None) => {
                 return LoginTemplate {
                     message: Some("Invalid username/password.".into()),
+                    next: creds.next
                 }
                 .into_response()
             }
@@ -102,7 +104,7 @@ mod post {
             Ok(_) => {
                 let creds = Credentials {
                     username: form.username,
-                    password: pw,
+                    password: form.password,
                     next: None,
                 };
                 self::login(auth_session, axum::Form(creds))
@@ -125,7 +127,7 @@ mod get {
     use super::*;
 
     pub async fn login() -> impl IntoResponse {
-        LoginTemplate { message: None }.into_response()
+        LoginTemplate { message: None, next: None }.into_response()
     }
 
     pub async fn register() -> impl IntoResponse {

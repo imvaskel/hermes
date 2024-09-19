@@ -1,11 +1,11 @@
 use askama::Template;
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use serde::Deserialize;
 
-use crate::models::Entry;
+use crate::models::{Entry, Note};
 
 use super::App;
 
@@ -24,6 +24,10 @@ struct CreateEntryForm {
     pub text: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct CreateNoteForm {
+    pub name: String,
+}
 #[derive(Deserialize)]
 pub struct Pagination {
     pub page: u32,
@@ -31,14 +35,23 @@ pub struct Pagination {
 }
 
 #[derive(Template)]
+#[template(path = "note.html")]
+struct NoteTemplate {
+    id: String,
+}
+
+#[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
-    id: String,
+    notes: Vec<Note>,
 }
 
 pub fn router() -> Router<App> {
     Router::new()
         .route("/", get(self::get::index))
+        .route("/notes/create", post(self::post::create_note))
+        .route("/notes/:id", get(self::get::note))
+        .route("/notes/:id", delete(self::delete::note))
         .route("/notes/:id/entries", get(self::get::entries))
         .route("/notes/:id/entries/create", post(self::post::create))
 }
@@ -48,6 +61,7 @@ mod post {
     use axum::{
         extract::{Path, State},
         http::StatusCode,
+        response::Redirect,
         Form,
     };
     use eos::DateTime;
@@ -112,9 +126,7 @@ mod post {
                 .await
                 {
                     Ok(n) => n,
-                    Err(e) => {
-                        debug!("{:#?}", e);
-                        return StatusCode::INTERNAL_SERVER_ERROR.into_response()},
+                    Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
                 };
                 EntriesTemplate {
                     note_id: entry.id.clone(),
@@ -131,6 +143,73 @@ mod post {
             }
         }
     }
+
+    pub async fn create_note(
+        State(state): State<App>,
+        auth: AuthSession,
+        Form(form): Form<CreateNoteForm>,
+    ) -> impl IntoResponse {
+        let user = match auth.user {
+            Some(u) => u,
+            None => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        };
+
+        let id = Uuid::new_v4().to_string();
+
+        match sqlx::query(
+            r#"INSERT INTO notes(note_id, note_name, note_owner)
+        VALUES($1, $2, $3) "#,
+        )
+        .bind(id.clone())
+        .bind(form.name)
+        .bind(user.id)
+        .execute(&state.db)
+        .await
+        {
+            Ok(_) => Redirect::to(&format!("/notes/{}", id)).into_response(),
+            Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    }
+}
+
+mod delete {
+
+    use askama_axum::IntoResponse;
+    use axum::{
+        body::Body,
+        extract::{Path, State},
+        http::{Response, StatusCode},
+    };
+    use axum_htmx::HX_REFRESH;
+
+    use crate::user::AuthSession;
+
+    use super::*;
+
+    pub async fn note(
+        State(state): State<App>,
+        auth: AuthSession,
+        Path(id): Path<String>,
+    ) -> impl IntoResponse {
+        let user = match auth.user {
+            Some(u) => u,
+            None => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        };
+
+        match sqlx::query("DELETE FROM notes WHERE note_id = $1 AND note_owner = $2")
+            .bind(id)
+            .bind(user.id)
+            .execute(&state.db)
+            .await
+        {
+            Ok(_) => Response::builder()
+                .header(HX_REFRESH, "true")
+                .status(StatusCode::OK)
+                .body(Body::default())
+                .unwrap(),
+            Err(_) => StatusCode::FORBIDDEN.into_response(),
+        }
+    }
 }
 
 mod get {
@@ -139,9 +218,9 @@ mod get {
         extract::{Path, Query, State},
         http::StatusCode,
     };
-    use eos::{ext::IntervalLiteral, DateTime};
-    use tracing::debug;
-    use uuid::Uuid;
+    
+    
+    
 
     use crate::{models::Note, user::AuthSession, web::App};
 
@@ -153,39 +232,21 @@ mod get {
             None => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         };
 
-        let note: Note = match sqlx::query_as(
-            "SELECT * FROM notes JOIN users ON notes.note_owner = users.user_id WHERE notes.note_name = $1 AND users.user_id = $2",
+        let user_notes: Vec<Note> = (sqlx::query_as(
+            r#"
+        SELECT * FROM notes
+        JOIN users ON notes.note_owner = users.user_id
+        WHERE notes.note_owner = $1 AND users.user_id = $1"#,
         )
-        .bind("default")
-        .bind(&user.id)
-        .fetch_optional(&state.db)
-        .await
-        {
-            Ok(Some(n)) => n,
-            Ok(None) => {
-                let id = Uuid::new_v4();
-                match sqlx::query_as(
-                    "INSERT INTO notes VALUES (?, ?, ?) RETURNING *",
-                )
-                .bind(id.to_string())
-                .bind("default")
-                .bind(&user.id)
-                .fetch_one(&state.db)
-                .await
-                {
-                    Ok(n) => n,
-                    Err(e) => {
-                        debug!("{:#?}", e);
+        .bind(user.id)
+        .fetch_all(&state.db)
+        .await).unwrap_or_default();
 
-                        return StatusCode::INTERNAL_SERVER_ERROR.into_response()},
-                }
-            }
-            Err(e) => {
-                debug!("{:#?}", e);
-                return StatusCode::INTERNAL_SERVER_ERROR.into_response()},
-        };
+        IndexTemplate { notes: user_notes }.into_response()
+    }
 
-        IndexTemplate { id: note.id }.into_response()
+    pub async fn note(Path(id): Path<String>) -> impl IntoResponse {
+        NoteTemplate { id }.into_response()
     }
 
     pub async fn entries(
@@ -227,7 +288,7 @@ mod get {
 
         EntriesTemplate {
             note_id: notes[0].parent.id.clone(),
-            notes: notes,
+            notes,
             page: pagination.page,
             per_page: pagination.per_page,
         }

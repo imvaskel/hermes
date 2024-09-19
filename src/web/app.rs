@@ -1,7 +1,7 @@
 use axum::Router;
 use axum_login::{login_required, tower_sessions::MemoryStore, AuthManagerLayerBuilder};
 use color_eyre::eyre::{Context, Result};
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool};
 use tower_sessions::{
     cookie::{time::Duration, Key},
     Expiry, SessionManagerLayer,
@@ -20,6 +20,16 @@ pub struct App {
 impl App {
     pub async fn new() -> Result<Self> {
         let config = Config::new()?;
+
+        if !sqlx::Sqlite::database_exists(&config.db_url)
+            .await
+            .context("Could not get status of sqlite database.")?
+        {
+            sqlx::Sqlite::create_database(&config.db_url)
+                .await
+                .context("Could not create sqlite database.")?;
+        }
+
         let db = SqlitePoolOptions::new()
             .connect(&config.db_url)
             .await

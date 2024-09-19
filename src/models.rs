@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use axum_login::AuthUser;
-use eos::{fmt::format_spec, DateTime, Timestamp, Utc};
+use eos::Timestamp;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -14,12 +14,6 @@ impl TryFrom<i64> for DatabaseTimestamp {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         Ok(Self(Timestamp::from_milliseconds(value)))
-    }
-}
-
-impl DatabaseTimestamp {
-    pub fn to_datetime(&self) -> DateTime {
-        eos::DateTime::from_timestamp(self.0, Utc)
     }
 }
 
@@ -71,12 +65,4 @@ pub struct Entry {
     pub id: String,
     #[sqlx(flatten)]
     pub parent: Note,
-}
-
-impl Entry {
-    pub fn format(&self) -> String {
-        eos::DateTime::from_timestamp(self.created_at.0, Utc)
-            .format(format_spec!("%I:%M %p"))
-            .to_string()
-    }
 }

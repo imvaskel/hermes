@@ -47,6 +47,7 @@
         Password
         <input type="password" name="password" id="password"> </input>
     </label>
+    <input type="hidden" name="next" value="{{ next.clone().unwrap_or("/".to_string()) }}"/>
     <button type="submit">Log In</button>
     <a href="/register"><button type="button">Register</button></a>
     {% match message %}
