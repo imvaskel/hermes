@@ -60,10 +60,86 @@
   .delete-button svg {
     height: 2rem;
   }
+
+  dialog {
+    background-color: #4a4a4a;
+    color: #d9d8dc;
+    border: none;
+    border-left: 5px solid #eb99a1;
+  }
+
+  dialog .title {
+    font-size: 16;
+  }
+
+  dialog form {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  dialog #modal-reject {
+    flex-grow: 1;
+  }
+
+
+
 </style>
 
-{% endblock %} {% block content %} {% include "nav.html" %} {% if notes.len() ==
-0 %}
+<script>
+  /**
+   * @type {HTMLDialogElement}
+   **/
+  let dialog;
+
+  document.handleModalClick = (event, val) => {
+    event.preventDefault();
+    dialog.returnValue = val;
+    dialog.close();
+  }
+
+  document.addEventListener("htmx:confirm", function(ev) {
+    ev.preventDefault();
+    if (dialog === undefined) {
+      dialog = document.getElementById("delete-dialog")
+    }
+
+    dialog.showModal();
+
+    dialog.addEventListener("close", (event) => {
+      if (dialog.returnValue === "true") {
+        console.log("hello")
+        ev.detail.issueRequest(true);
+      }
+    }, { once: true })
+  });
+</script>
+
+{% endblock %} {% block content %} {% include "nav.html" %}
+
+<dialog id="delete-dialog" data-return="">
+  <strong>
+    <p class="title">Delete Note</p>
+  </strong>
+  <p>This cannot be undone.</p>
+  <form method="dialog">
+    <button
+      id="modal-reject"
+      onclick="handleModalClick(event, false)"
+    >
+      Cancel
+    </button>
+    <button
+      id="modal-confirm"
+      onclick="handleModalClick(event, true)"
+    >
+      Delete
+    </button>
+  </form>
+</dialog>
+
+{% if notes.len() == 0 %}
 <p>No Notes</p>
 <h3>Create note:</h3>
 <form method="post" action="/notes/create">
