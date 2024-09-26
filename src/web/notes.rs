@@ -88,10 +88,9 @@ mod post {
 
         let note: Note = match sqlx::query_as(
             r#"
-            SELECT * FROM notes
-            JOIN users ON notes.note_owner = users.user_id
-            WHERE notes.note_id = $1
-            AND users.user_id = $2
+            SELECT * FROM v_notes
+            WHERE note_id = $1
+            AND user_id = $2
         "#,
         )
         .bind(id.clone())
@@ -119,10 +118,8 @@ mod post {
         {
             Ok(_) => {
                 let entry: Entry = match sqlx::query_as(
-                    r#"SELECT * FROM entries
-                JOIN notes ON entries.parent = notes.note_id
-                JOIN users ON notes.note_owner = users.user_id
-                WHERE entries.entry_id = $1"#,
+                    r#"SELECT * FROM v_entries
+                WHERE entry_id = $1"#,
                 )
                 .bind(id)
                 .fetch_one(&state.db)
@@ -234,9 +231,8 @@ mod get {
 
         let user_notes: Vec<Note> = (sqlx::query_as(
             r#"
-        SELECT * FROM notes
-        JOIN users ON notes.note_owner = users.user_id
-        WHERE notes.note_owner = $1 AND users.user_id = $1"#,
+        SELECT * FROM v_notes
+        WHERE note_owner = $1 AND user_id = $1"#,
         )
         .bind(user.id)
         .fetch_all(&state.db)
@@ -263,10 +259,8 @@ mod get {
 
         let pagination: Pagination = pagination.0;
         let mut notes: Vec<Entry> = sqlx::query_as::<_, Entry>(
-            r#"SELECT * FROM entries
-            JOIN notes ON entries.parent = notes.note_id
-            JOIN users ON notes.note_owner = users.user_id
-            WHERE parent = $1 AND notes.note_owner = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
+            r#"SELECT * FROM v_entries
+            WHERE parent = $1 AND note_owner = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
         )
         .bind(&id)
         .bind(&user.id)

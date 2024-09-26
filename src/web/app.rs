@@ -2,10 +2,15 @@ use axum::Router;
 use axum_login::{login_required, tower_sessions::MemoryStore, AuthManagerLayerBuilder};
 use color_eyre::eyre::{Context, Result};
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, SqlitePool};
+use tower_http::{
+    trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    LatencyUnit,
+};
 use tower_sessions::{
     cookie::{time::Duration, Key},
     Expiry, SessionManagerLayer,
 };
+use tracing::{info, Level};
 
 use crate::{config::Config, user::Backend};
 
@@ -25,6 +30,7 @@ impl App {
             .await
             .context("Could not get status of sqlite database.")?
         {
+            info!("Database file did not exist, creating.");
             sqlx::Sqlite::create_database(&config.db_url)
                 .await
                 .context("Could not create sqlite database.")?;
@@ -58,13 +64,23 @@ impl App {
             .merge(notes::router().route_layer(login_required!(Backend, login_url = "/login")))
             .merge(auth::router())
             .layer(auth_layer)
+            .layer(
+                TraceLayer::new_for_http()
+                    .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                    .on_request(DefaultOnRequest::new().level(Level::INFO))
+                    .on_response(
+                        DefaultOnResponse::new()
+                            .level(Level::INFO)
+                            .latency_unit(LatencyUnit::Micros),
+                    )
+                    .on_failure(DefaultOnFailure::new().level(Level::INFO)),
+            )
             .with_state(self.clone());
 
-        let listener = tokio::net::TcpListener::bind(format!(
-            "{}:{}",
-            self.config.bind_addr, self.config.port
-        ))
-        .await?;
+        let addr = format!("{}:{}", self.config.bind_addr, self.config.port);
+        info!("Listening on http://{addr}");
+
+        let listener = tokio::net::TcpListener::bind(&addr).await?;
 
         axum::serve(listener, app).await?;
 
